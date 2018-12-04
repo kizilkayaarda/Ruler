@@ -20,14 +20,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Set the view's delegate
         sceneView.delegate = self
         
-        // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
-        
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
-        
-        // Set the scene to the view
-        sceneView.scene = scene
+       sceneView.debugOptions = [SCNDebugOptions.showFeaturePoints]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -46,30 +39,37 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Pause the view's session
         sceneView.session.pause()
     }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if let touchLocation = touches.first?.location(in: sceneView) {
+        
+            let testResults = sceneView.hitTest(touchLocation, types: .featurePoint)
+            
+            if let hitResults = testResults.first {
+                
+                addDot(at: hitResults)
+                
+            }
+        
+        }
+        
+    }
+    
+    func addDot(at hitResult: ARHitTestResult) {
+        
+        let dotGeometry = SCNSphere(radius: 0.005)
+        
+        let colorMaterial = SCNMaterial()
+        colorMaterial.diffuse.contents = UIColor.red
+        dotGeometry.materials = [colorMaterial]
+        
+        let dotNode = SCNNode()
+        
+        dotNode.position = SCNVector3(hitResult.worldTransform.columns.3.x, hitResult.worldTransform.columns.3.y , hitResult.worldTransform.columns.3.z)
+        
+        dotNode.geometry = dotGeometry
+        sceneView.scene.rootNode.addChildNode(dotNode)
+        
+    }
 
-    // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
-    }
 }
