@@ -14,6 +14,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
+    var dotNodeArray = [SCNNode]()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -50,11 +52,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 addDot(at: hitResults)
                 
             }
-        
         }
-        
     }
     
+    //MARK: - Adding dots at the locations where the user touched
     func addDot(at hitResult: ARHitTestResult) {
         
         let dotGeometry = SCNSphere(radius: 0.005)
@@ -70,6 +71,39 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         dotNode.geometry = dotGeometry
         sceneView.scene.rootNode.addChildNode(dotNode)
         
+        dotNodeArray.append(dotNode)
+        
+        if dotNodeArray.count >= 2 {
+            calculateDistance()
+        }
+        
+    }
+    
+    //MARK: - Calculates the distance between two dots added to the scene in the real world
+    func calculateDistance() {
+        
+        let startingPoint = dotNodeArray[0]
+        let endPoint = dotNodeArray[1]
+        
+        let dx = endPoint.position.x - startingPoint.position.x
+        let dy = endPoint.position.y - startingPoint.position.y
+        let dz = endPoint.position.z - startingPoint.position.z
+        
+        let distance = sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2))
+        
+        displayMeasurement(text: "\(Int(distance * 100)) cm", at: endPoint.position)
+    }
+    
+    //MARK: - Displays the distance measured in the scene with a 3D text
+    func displayMeasurement(text: String, at position: SCNVector3) {
+        
+        let textMeasurement = SCNText(string: text, extrusionDepth: 1.5)
+        textMeasurement.firstMaterial?.diffuse.contents = UIColor.red
+        
+        let textNode = SCNNode(geometry: textMeasurement)
+        textNode.position = SCNVector3(position.x, position.y, position.z)
+        
+        sceneView.scene.rootNode.addChildNode(textNode)
     }
 
 }
