@@ -15,6 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     @IBOutlet var sceneView: ARSCNView!
     
     var dotNodeArray = [SCNNode]()
+    var textNode = SCNNode()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,7 +23,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Set the view's delegate
         sceneView.delegate = self
         
-       sceneView.debugOptions = [SCNDebugOptions.showFeaturePoints]
+        sceneView.debugOptions = [SCNDebugOptions.showFeaturePoints]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -43,14 +44,20 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        if dotNodeArray.count >= 2 {
+            for node in dotNodeArray {
+                node.removeFromParentNode()
+            }
+            dotNodeArray = [SCNNode]()
+        }
+        
         if let touchLocation = touches.first?.location(in: sceneView) {
         
             let testResults = sceneView.hitTest(touchLocation, types: .featurePoint)
             
             if let hitResults = testResults.first {
-                
                 addDot(at: hitResults)
-                
             }
         }
     }
@@ -91,17 +98,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         let distance = sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2))
         
-        displayMeasurement(text: "\(Int(distance * 100)) cm", at: endPoint.position)
+        displayMeasurement(text: "\(distance * 100) m", at: endPoint.position)
     }
     
     //MARK: - Displays the distance measured in the scene with a 3D text
     func displayMeasurement(text: String, at position: SCNVector3) {
         
-        let textMeasurement = SCNText(string: text, extrusionDepth: 1.5)
-        textMeasurement.firstMaterial?.diffuse.contents = UIColor.red
+        textNode.removeFromParentNode()
         
-        let textNode = SCNNode(geometry: textMeasurement)
+        let textMeasurement = SCNText(string: text, extrusionDepth: 1.5)
+        
+        let textMaterial = SCNMaterial()
+        textMaterial.diffuse.contents = UIColor.red
+        
+        textMeasurement.materials = [textMaterial]
+        
+        textNode.geometry = textMeasurement
         textNode.position = SCNVector3(position.x, position.y, position.z)
+        
+        textNode.scale = SCNVector3(0.01, 0.01, 0.01)
         
         sceneView.scene.rootNode.addChildNode(textNode)
     }
